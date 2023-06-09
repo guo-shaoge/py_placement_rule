@@ -16,7 +16,7 @@ with open(sys.argv[1]) as f:
     rules = json.load(f)
     new_rules = []
     for rule in rules:
-        if rule['id'].startswith('keyspace-5794'):
+        if rule['id'].startswith('keyspace-' + sys.argv[2]):
             # check and update group_id
             if rule['group_id'] != 'tiflash':
                 print(rule['id'] + ' has wrong rule group, should be tiflash')
@@ -42,5 +42,6 @@ with open(sys.argv[1]) as f:
             enable_wn_rule = {'key': 'engine_role', 'op': 'in', 'values': ['write']}
             new_constraints.append(enable_wn_rule)
             rule['label_constraints'] = new_constraints
+            rule['count'] = 1
             new_rules.append(rule)
     print(json.dumps(new_rules, indent=2))
