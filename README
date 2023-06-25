@@ -9,3 +9,7 @@ filter_keyspace.py: remove other keyspace rule, only left keyspace you want.
 filter_table.py: remove other table, only left table you want.
 
     usage: ./filter.py ori_rules.json table_id_you_want
+
+enable_all_except.py: add rules to add s3 wn tiflash replica except specific keyspaceid
+
+    usage: ./enable.py ori_rules.json keyspace_id_you_dont_need
