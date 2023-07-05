@@ -1,3 +1,135 @@
+1. disable_s3.py: ./disable_s3.py ori.json &> disable_s3.json
+```
+From:
+{
+    group_id: tiflash,
+    constraints: [
+        {
+            key: engine,
+            op: in,
+            values: [
+                tiflash,
+            ],
+        },
+        {
+        },
+    ],
+}
+
+To:
+{
+    group_id: tiflash,
+    constraints: [
+        {
+            key: engine,
+            op: in,
+            values: [
+                tiflash,
+            ],
+        },
+        {
+            key: engine_role,
+            op: notIn,
+            values: [
+                write,
+            ],
+        },
+    ],
+}
+```
+
+2. enable_s3.py:
+```
+From:
+{
+    group_id: tiflash,
+    constraints: [
+        {
+            key: engine,
+            op: in,
+            values: [
+                tiflash,
+            ],
+        },
+        {
+            key: engine_role,
+            op: notIn,
+            values: [
+                write,
+            ],
+        },
+    ],
+}
+
+To:
+{
+    group_id: enable_s3_wn_region,
+    constraints: [
+        {
+            key: engine,
+            op: in,
+            values: [
+                tiflash,
+            ],
+        },
+        {
+            key: engine_role,
+            op: in,
+            values: [
+                write,
+            ],
+        },
+    ],
+}
+```
+3. remove_non_s3.py
+```
+From:
+{
+    group_id: tiflash,
+    count: n,
+    constraints: [
+        {
+            key: engine,
+            op: in,
+            values: [
+                tiflash,
+            ],
+        },
+        {
+            key: engine_role,
+            op: notIn,
+            values: [
+                write,
+            ],
+        },
+    ],
+}
+
+To:
+{
+    group_id: tiflash,
+    count: 0
+    constraints: [
+        {
+            key: engine,
+            op: in,
+            values: [
+                tiflash,
+            ],
+        },
+        {
+            key: engine_role,
+            op: notIn,
+            values: [
+                write,
+            ],
+        },
+    ],
+}
+```
+
+
 enable.py: add rule to add s3 wn tiflash replica
     
     usage: ./enable.py ori_rules.json keyspace_id_you_want
