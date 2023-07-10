@@ -128,7 +128,52 @@ To:
     ],
 }
 ```
+4. remote_s3.py
+```
+From:
+{
+    group_id: enable_s3_wn_region,
+    count: n,
+    constraints: [
+        {
+            key: engine,
+            op: in,
+            values: [
+                tiflash,
+            ],
+        },
+        {
+            key: engine_role,
+            op: in,
+            values: [
+                write,
+            ],
+        },
+    ],
+}
 
+To:
+{
+    group_id: enable_s3_wn_region,
+    count: 0,
+    constraints: [
+        {
+            key: engine,
+            op: in,
+            values: [
+                tiflash,
+            ],
+        },
+        {
+            key: engine_role,
+            op: in,
+            values: [
+                write,
+            ],
+        },
+    ],
+}
+```
 
 enable.py: add rule to add s3 wn tiflash replica
     
