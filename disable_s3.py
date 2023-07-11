@@ -1,47 +1,43 @@
 #!/usr/bin/env python3
-# From:
-# {
-#     group_id: tiflash,
-#     constraints: [
-#         {
-#             key: engine,
-#             op: in,
-#             values: [
-#                 tiflash,
-#             ],
-#         },
-#         {
-#         },
-#     ],
-# }
-#
-# To:
-# {
-#     group_id: tiflash,
-#     constraints: [
-#         {
-#             key: engine,
-#             op: in,
-#             values: [
-#                 tiflash,
-#             ],
-#         },
-#         {
-#             key: engine_role,
-#             op: notIn,
-#             values: [
-#                 write,
-#             ],
-#         },
-#     ],
-# }
 
 import json
 import sys
 
+def is_enable_wn_rule(constraint):
+    res = False
+
+    if constraint['key'] == 'engine_role' and constraint['op'] == 'in':
+        values = constraint['values']
+        if len(values) == 1 and values[0] == 'write':
+            res = True
+
+    return res
+
+
+def is_disable_wn_rule(constraint):
+    res = False
+
+    if constraint['key'] == 'engine_role' and constraint['op'] == 'notIn':
+        values = constraint['values']
+        if len(values) == 1 and values[0] == 'write':
+            res = True
+
+    return res
+
+def is_ori_tiflash_rule(constraint):
+    res = False
+
+    if constraint['key'] == 'engine' and constraint['op'] == 'in':
+        values = constraint['values']
+        if len(values) == 1 and values[0] == 'tiflash':
+            res = True
+
+    return res
+
 with open(sys.argv[1]) as f:
     rules = json.load(f)
     new_rules = []
+    ignore_rule = 0
     for rule in rules:
         # check group_id should be 'tiflash'
         if rule['group_id'] != 'tiflash':
@@ -49,27 +45,36 @@ with open(sys.argv[1]) as f:
             exit()
 
         constraints = rule['label_constraints']
-        check_constraints_ok = True
-        if len(constraints) != 1:
-            check_constraints_ok = False
-        else:
-            if constraints[0]['key'] != 'engine' or constraints[0]['op'] != 'in':
-                check_constraints_ok = False
-            else:
-                if len(constraints[0]['values']) != 1:
-                    check_constraints_ok = False
-                else:
-                    if constraints[0]['values'][0] != 'tiflash':
-                        check_constraints_ok = False
+        has_ori_rule = False
+        has_disable_wn_rule = False
+        has_enable_wn_rule = False
+
+        # 如果 rule 已经有 <engine in tiflash> <engine_role notIn write> 则忽略
+        for con in constraints:
+            if is_ori_tiflash_rule(con):
+                has_ori_rule = True
+            if is_disable_wn_rule(con):
+                has_disable_wn_rule = True
+            if is_enable_wn_rule(con):
+                has_enable_wn_rule = True
+
+        check_constraints_ok = False
+        if not has_enable_wn_rule and has_ori_rule:
+            check_constraints_ok = True
 
         if not check_constraints_ok:
-            print("unexpect plancement rule: we expect constraints: <engine in tiflash> only")
+            print("unexpect plancement rule: we expect constraints: <engine in tiflash> and should not <engine_role in write>")
             print(json.dumps(rule, indent=2))
             exit()
+
+        if has_disable_wn_rule:
+            ignore_rule += 1
+            continue
 
         disable_wn_rule = {'key': 'engine_role', 'op': 'notIn', 'values': ['write']}
         constraints.append(disable_wn_rule)
         new_rules.append(rule)
+    print("ignore count: " + str(ignore_rule))
     print(json.dumps(new_rules, indent=2))
 
 
